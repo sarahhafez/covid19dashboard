@@ -19,6 +19,28 @@ df <- read.csv(url(link))
 df <- df %>% 
     mutate(date = lubridate::ymd(date))
 
+# define function
+
+createdata <- function(province1,province2,province3) {
+    if (province2 == "None" & province3 == "None") {
+        filter_data <- df %>% 
+            filter(prname == province1) 
+        return(filter_data)
+    } else if (province2 == "None" & province3 != "None") {
+        filter_data <- df %>% 
+            filter(prname %in% c(province1,province3))  
+        return(filter_data)
+    } else if (province2 != "None" & province3 == "None") {
+        filter_data <- df %>% 
+            filter(prname %in% c(province1,province2)) 
+        return(filter_data)
+    } else if (province2 != "None" & province3 != "None") {
+        filter_data <- df %>% 
+            filter(prname %in% c(province1,province2,province3))
+        return(filter_data)
+    }
+}
+
 
 # Define UI 
 ui <- fluidPage(
@@ -29,11 +51,17 @@ ui <- fluidPage(
     
     sidebarLayout(
         sidebarPanel(selectInput(inputId = "time_series_data",
-                                 label = "Which number are you interested in?", 
-                                 selected = "Cases", choices = c("Cases", "Death", "Active")),
-                     selectInput(inputId = "province",
-                                 label = "Which number are you interested in?", 
-                                 selected = "Canada", choices = unique(df$prname))
+                                 label = "Wat kind of number are you interested in?", 
+                                 selected = "Cases", choices = c("Daily Cases", "Daily Death", "Daily Active")),
+                     selectInput(inputId = "province1",
+                                 label = "Which province are you interested in?", 
+                                 selected = "Canada", choices = unique(df$prname)),
+                     selectInput(inputId = "province2",
+                                 label = "Which province are you interested in?", 
+                                 selected = "None", choices = c('None',unique(df$prname))),
+                     selectInput(inputId = "province3",
+                                 label = "Which province are you interested in?", 
+                                 selected = "None", choices = c('None',unique(df$prname)))
                      ),
         
         mainPanel(plotlyOutput("time_series"))
@@ -44,41 +72,73 @@ ui <- fluidPage(
 server <- function(input, output) {
     
     output$time_series <- renderPlotly( {
-        
-        filter_data <- df %>% 
-            filter(prname == input$province)
-        
-        if(input$time_series_data == "Cases") {
-            our_plot <- filter_data %>% 
-                ggplot(aes(date, numtoday)) +
+    
+        if (input$time_series_data == "Daily Cases") {
+            our_plot <- createdata(input$province1,input$province2,input$province3) %>% 
+                ggplot(aes(date, numtoday,col=prname)) +
                 geom_line() + 
                 labs(title = "Number of Reported Cases per day",
                      x = "Date",
-                     y = "Number of Cases")
+                     y = "Number of Reported Cases",
+                     color="Province name")
+            plot <- our_plot +
+                geom_vline(xintercept=as.numeric(lubridate::ymd("2020-12-14")))+
+                annotate("text", x=lubridate::ymd("2020-12-14"), y=0, 
+                         label="\nFirst dose starts")+
+                geom_vline(xintercept=as.numeric(lubridate::ymd("2021-05-25")))+
+                annotate("text", x=lubridate::ymd("2021-05-25"), y=0, 
+                         label="\nSecond dose starts")+
+                geom_vline(xintercept=as.numeric(lubridate::ymd("2021-11-12")))+
+                annotate("text", x=lubridate::ymd("2021-11-12"), y=0, 
+                         label="\nThird dose starts")
             
-            our_plotly_plot <- ggplotly(our_plot)
+            our_plotly_plot <- ggplotly(plot)
             
             return(our_plotly_plot)
-        } else if (input$time_series_data == "Death") {
-            our_plot <- filter_data %>% 
-                ggplot(aes(date, numdeathstoday)) +
+        } else if (input$time_series_data == "Daily Death") {
+            our_plot <- createdata(input$province1,input$province2,input$province3) %>%
+                ggplot(aes(date, numdeathstoday,col=prname)) +
                 geom_line() + 
                 labs(title = "Number of Death per day",
                      x = "Date",
-                     y = "Number of Death")
+                     y = "Number of Death",
+                     color="Province name")
             
-            our_plotly_plot <- ggplotly(our_plot)
+            plot <- our_plot +
+                geom_vline(xintercept=as.numeric(lubridate::ymd("2020-12-14")))+
+                annotate("text", x=lubridate::ymd("2020-12-14"), y=0, 
+                         label="\nFirst dose starts")+
+                geom_vline(xintercept=as.numeric(lubridate::ymd("2021-05-25")))+
+                annotate("text", x=lubridate::ymd("2021-05-25"), y=0, 
+                         label="\nSecond dose starts")+
+                geom_vline(xintercept=as.numeric(lubridate::ymd("2021-11-12")))+
+                annotate("text", x=lubridate::ymd("2021-11-12"), y=0, 
+                         label="\nThird dose starts")
+            
+            our_plotly_plot <- ggplotly(plot)
             
             return(our_plotly_plot)
-        } else if (input$time_series_data == "Active") {
-            our_plot <- filter_data %>% 
-                ggplot(aes(date, numactive)) +
+        } else if (input$time_series_data == "Daily Active") {
+            our_plot <- createdata(input$province1,input$province2,input$province3) %>%
+                ggplot(aes(date, numactive,col=prname)) +
                 geom_line() + 
                 labs(title = "Number of Active Cases per day",
                      x = "Date",
-                     y = "Number of Active Cases")
+                     y = "Number of Active Cases",
+                     color="Province name")
             
-            our_plotly_plot <- ggplotly(our_plot)
+            plot <- our_plot +
+                geom_vline(xintercept=as.numeric(lubridate::ymd("2020-12-14")))+
+                annotate("text", x=lubridate::ymd("2020-12-14"), y=0, 
+                         label="\nFirst dose starts")+
+                geom_vline(xintercept=as.numeric(lubridate::ymd("2021-05-25")))+
+                annotate("text", x=lubridate::ymd("2021-05-25"), y=0, 
+                         label="\nSecond dose starts")+
+                geom_vline(xintercept=as.numeric(lubridate::ymd("2021-11-12")))+
+                annotate("text", x=lubridate::ymd("2021-11-12"), y=0, 
+                         label="\nThird dose starts")
+            
+            our_plotly_plot <- ggplotly(plot)
             
             return(our_plotly_plot)
         }
