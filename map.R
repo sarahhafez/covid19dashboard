@@ -1,23 +1,20 @@
 library(shiny)
+library(bslib)
+library(shinydashboard)
+library(highcharter)
+library(plotly)
+library(ggplot2)
+library(tidyverse)
+library(magrittr)
+library(readr)
+library(shinyjqui)
+library(countup)
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
     
-    # Application title
-    titlePanel("Overview Of Canada"),
-    
-    # Sidebar with a slider input for number of bins 
-    sidebarLayout(
-        sidebarPanel(
-            selectInput("stat_map",
-                        "Statistic of Choice",
-                        choice = c("Total Deaths", "Total Cases"))
-        ),
-        
-        # Show a plot of the generated distribution
-        mainPanel(
-            highchartOutput("canadianMap")
-        )
-    )
+    fluidRow(highchartOutput("canadianMap"))
+  
 )
 
 # Define server logic 
@@ -36,7 +33,7 @@ server <- function(input, output) {
         
         hcmap('countries/ca/ca-all',
               data = df,
-              value = input$stat_map,
+              value = "Total Cases",
               joinBy = c('woe-name', 'prname'),
               dataLabels = list(enabled = TRUE, format = "{point.name}"),
               showInLegend = F)
