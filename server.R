@@ -1,13 +1,3 @@
-library(shiny)
-library(highcharter)
-library(tidyverse)
-library(magrittr)
-library(readr)
-library(ggplot2)
-library(plotly)
-library(bslib)
-
-
 cases_link <-"https://health-infobase.canada.ca/src/data/covidLive/covid19-download.csv"
 original_data_cases <- read.csv(url(cases_link)) %>% 
   mutate(date = lubridate::ymd(date))
@@ -37,21 +27,31 @@ createdata <- function(province1,province2,province3) {
 
 function(input, output) {
   
-  df_cases <- original_data_cases %>%
-    select(c("prname", "numdeathstoday", "numtoday")) %>%
-    group_by(prname) %>%
-    summarise("Total Deaths" = sum(numdeathstoday), "Total Cases" = sum(numtoday))
+  canada_latest_covid_numbers <- original_data_cases %>%
+    arrange(date) %>%
+    filter(prname == "Canada") %>%
+    tail(n=1)
   
-  output$totalcases <- renderUI({ 
-    df_cases %>%
-      filter(prname=="Canada") %>% .[["Total Cases"]]
+  output$totalcases <- renderCountup({ 
+    countup(canada_latest_covid_numbers$numtotal,
+            duration = 2)
   })
   
-  output$totaldeaths <- renderUI({ 
-    df_cases %>%
-      filter(prname=="Canada") %>% .[["Total Deaths"]]
+  
+  output$totaldeaths <- renderCountup({ 
+    countup(canada_latest_covid_numbers$numdeaths,
+            duration = 2)
   })
   
+  output$deathsLastSevenDays <- renderCountup({ 
+    countup(canada_latest_covid_numbers$numdeaths_last7,
+            duration = 2)
+  })
+  
+  output$numberOfActiveCases <- renderCountup({ 
+    countup(canada_latest_covid_numbers$numactive,
+            duration = 2)
+  })
   
   output$canadianMap <- renderHighchart({
     
@@ -63,12 +63,20 @@ function(input, output) {
       filter(prname!="Repatriated travellers" && prname!="Canada") %>%
       mutate(prname = replace(prname, prname == "Quebec", "Québec")) #needed for the map
     
+    
     hcmap('countries/ca/ca-all',
           data = df,
-          value = "Total Cases" ,
+          value = "Total Cases",
+          name =  "Total Cases",
           joinBy = c('woe-name', 'prname'),
           dataLabels = list(enabled = TRUE, format = "{point.name}"),
-          showInLegend = F)
+          legend = F,
+          nullColor = "#DADADA",
+          showInLegend = F) %>%
+      hc_title(text = "Total Cases by Province") %>%
+      hc_subtitle(text = "Ontario and Quebec have recorded the highest number of cases") %>%
+      hc_legend(enabled = F)
+      
     
   })
   

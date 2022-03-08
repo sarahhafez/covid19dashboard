@@ -1,8 +1,14 @@
 library(shiny)
-library(highcharter)
+library(bslib)
 library(shinydashboard)
-library(tidyverse)
+library(highcharter)
 library(plotly)
+library(ggplot2)
+library(tidyverse)
+library(magrittr)
+library(readr)
+library(shinyjqui)
+library(countup)
 
 cases_link <-"https://health-infobase.canada.ca/src/data/covidLive/covid19-download.csv"
 original_data_cases <- read.csv(url(cases_link)) %>% 
@@ -10,31 +16,44 @@ original_data_cases <- read.csv(url(cases_link)) %>%
 
 
 fluidPage(
+  theme = bs_theme(version = 4, bootswatch = "minty"),
   # Application title
-  titlePanel("COVID-19: Past and Present Impact"),
+  titlePanel(
+    h1("COVID-19: Past and Present Impact", align = "center")
+    ),
   
-  h2("The Human Impact of COVID since December 2020"),
+  h2("The Human Impact of COVID since December 2020", align = "center"),
   
   
   #First start with the Map of Canada, showing the total deaths and cases in each provinces
-  #On the side there is a statistic that shows
+  #On the side there is a statistic that shows the total deaths and cases in Canada
   
   
   fluidRow(
-    column(8,
-           highchartOutput("canadianMap")),
     
-    column(4,
-           
-           fixedRow(valueBox(uiOutput("totalcases"), "Total Cases")),
-           fixedRow(valueBox(uiOutput("totaldeaths"), "Total Deaths"))
-    )
-  ), 
-  
+    align="center",
+    
+    column(3,valueBox(countupOutput("totalcases"), "Total Cases")),
+    column(3,valueBox(countupOutput("totaldeaths"), "Total Deaths")),
+    column(3,valueBox(countupOutput("deathsLastSevenDays"), "Deaths Last Week")),
+    column(3,valueBox(countupOutput("numberOfActiveCases"), "Active Cases"))
+    
+  ),
   
   br(),
   
-  h2("How have vaccines helped?"),
+  
+  
+  fluidRow(highchartOutput("canadianMap")),
+  
+  
+  br(),
+
+  
+  h2("How have vaccines contributed?",  align = "center"),
+  br(),
+  
+  h3("Effect of Vaccinations on Trends",  align = "center"),
   
   sidebarLayout(
     sidebarPanel(selectInput(inputId = "time_series_data",
@@ -58,7 +77,7 @@ fluidPage(
   
   
   
-  h1("Vaccination Acceptance"),
+  h3("Breakdown of Vaccination Status by Cases Status and Gender",  align = "center"),
   
   verticalLayout(
     highchartOutput("pieChart"),
