@@ -52,7 +52,7 @@ ui <- fluidPage(
     sidebarLayout(
         sidebarPanel(selectInput(inputId = "time_series_data",
                                  label = "Wat kind of number are you interested in?", 
-                                 selected = "Cases", choices = c("Daily Cases", "Daily Death", "Daily Active")),
+                                 selected = "Daily Cases", choices = c("Daily Cases", "Daily Death")),
                      selectInput(inputId = "province1",
                                  label = "Which province are you interested in?", 
                                  selected = "Canada", choices = unique(df$prname)),
@@ -81,16 +81,18 @@ server <- function(input, output) {
                      x = "Date",
                      y = "Number of Reported Cases",
                      color="Province name")
+            ymax=max(createdata(input$province1,input$province2,input$province3)$numtoday)
             plot <- our_plot +
                 geom_vline(xintercept=as.numeric(lubridate::ymd("2020-12-14")))+
-                annotate("text", x=lubridate::ymd("2020-12-14"), y=0, 
-                         label="\nFirst dose starts")+
+                annotate('text', x=lubridate::ymd("2020-12-14"), y=ymax,
+                         label="\nFirst dose starts",angle=45)+
                 geom_vline(xintercept=as.numeric(lubridate::ymd("2021-05-25")))+
-                annotate("text", x=lubridate::ymd("2021-05-25"), y=0, 
+                annotate("text", x=lubridate::ymd("2021-05-25"), y=ymax, 
                          label="\nSecond dose starts")+
                 geom_vline(xintercept=as.numeric(lubridate::ymd("2021-11-12")))+
-                annotate("text", x=lubridate::ymd("2021-11-12"), y=0, 
-                         label="\nThird dose starts")
+                annotate("text", x=lubridate::ymd("2021-11-12"), y=ymax, 
+                         label="\nThird dose starts")+
+                theme_classic()
             
             our_plotly_plot <- ggplotly(plot)
             
@@ -103,45 +105,23 @@ server <- function(input, output) {
                      x = "Date",
                      y = "Number of Death",
                      color="Province name")
-            
+            ymax=max(createdata(input$province1,input$province2,input$province3)$numdeathstoday)
             plot <- our_plot +
                 geom_vline(xintercept=as.numeric(lubridate::ymd("2020-12-14")))+
-                annotate("text", x=lubridate::ymd("2020-12-14"), y=0, 
+                annotate("text", x=lubridate::ymd("2020-12-14"), y=ymax, 
                          label="\nFirst dose starts")+
                 geom_vline(xintercept=as.numeric(lubridate::ymd("2021-05-25")))+
-                annotate("text", x=lubridate::ymd("2021-05-25"), y=0, 
+                annotate("text", x=lubridate::ymd("2021-05-25"), y=ymax, 
                          label="\nSecond dose starts")+
                 geom_vline(xintercept=as.numeric(lubridate::ymd("2021-11-12")))+
-                annotate("text", x=lubridate::ymd("2021-11-12"), y=0, 
-                         label="\nThird dose starts")
+                annotate("text", x=lubridate::ymd("2021-11-12"), y=ymax, 
+                         label="\nThird dose starts")+
+                theme_classic()
             
             our_plotly_plot <- ggplotly(plot)
             
             return(our_plotly_plot)
-        } else if (input$time_series_data == "Daily Active") {
-            our_plot <- createdata(input$province1,input$province2,input$province3) %>%
-                ggplot(aes(date, numactive,col=prname)) +
-                geom_line() + 
-                labs(title = "Number of Active Cases per day",
-                     x = "Date",
-                     y = "Number of Active Cases",
-                     color="Province name")
-            
-            plot <- our_plot +
-                geom_vline(xintercept=as.numeric(lubridate::ymd("2020-12-14")))+
-                annotate("text", x=lubridate::ymd("2020-12-14"), y=0, 
-                         label="\nFirst dose starts")+
-                geom_vline(xintercept=as.numeric(lubridate::ymd("2021-05-25")))+
-                annotate("text", x=lubridate::ymd("2021-05-25"), y=0, 
-                         label="\nSecond dose starts")+
-                geom_vline(xintercept=as.numeric(lubridate::ymd("2021-11-12")))+
-                annotate("text", x=lubridate::ymd("2021-11-12"), y=0, 
-                         label="\nThird dose starts")
-            
-            our_plotly_plot <- ggplotly(plot)
-            
-            return(our_plotly_plot)
-        }
+        } 
         
     }) 
     
