@@ -1,8 +1,3 @@
-
-
-
-
-
 # load the libraries ------------------------------------------------------
 library(shiny)
 library(dplyr)
@@ -14,28 +9,28 @@ library(bslib)
 
 # load our data -----------------------------------------------------------
 
-link <- "https://health-infobase.canada.ca/src/data/covidLive/covid19-download.csv"
-df <- read.csv(url(link))
-df <- df %>% 
+cases_link <- "https://health-infobase.canada.ca/src/data/covidLive/covid19-download.csv"
+original_data_cases <- read.csv(url(cases_link))
+original_data_cases <- original_data_cases %>% 
     mutate(date = lubridate::ymd(date))
 
 # define function
 
 createdata <- function(province1,province2,province3) {
     if (province2 == "None" & province3 == "None") {
-        filter_data <- df %>% 
+        filter_data <- original_data_cases %>% 
             filter(prname == province1) 
         return(filter_data)
     } else if (province2 == "None" & province3 != "None") {
-        filter_data <- df %>% 
+        filter_data <- original_data_cases %>% 
             filter(prname %in% c(province1,province3))  
         return(filter_data)
     } else if (province2 != "None" & province3 == "None") {
-        filter_data <- df %>% 
+        filter_data <- original_data_cases %>% 
             filter(prname %in% c(province1,province2)) 
         return(filter_data)
     } else if (province2 != "None" & province3 != "None") {
-        filter_data <- df %>% 
+        filter_data <- original_data_cases %>% 
             filter(prname %in% c(province1,province2,province3))
         return(filter_data)
     }
@@ -55,13 +50,13 @@ ui <- fluidPage(
                                  selected = "Daily Cases", choices = c("Daily Cases", "Daily Death")),
                      selectInput(inputId = "province1",
                                  label = "Which province are you interested in?", 
-                                 selected = "Canada", choices = unique(df$prname)),
+                                 selected = "Canada", choices = unique(original_data_cases$prname)),
                      selectInput(inputId = "province2",
                                  label = "Which province are you interested in?", 
-                                 selected = "None", choices = c('None',unique(df$prname))),
+                                 selected = "None", choices = c('None',unique(original_data_cases$prname))),
                      selectInput(inputId = "province3",
                                  label = "Which province are you interested in?", 
-                                 selected = "None", choices = c('None',unique(df$prname)))
+                                 selected = "None", choices = c('None',unique(original_data_cases$prname)))
                      ),
         
         mainPanel(plotlyOutput("time_series"))
