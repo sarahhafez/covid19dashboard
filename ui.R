@@ -101,12 +101,14 @@ fluidPage(
         "cases, representing approximately 47% of the total number of cases.") %>%
     p(align = "center"),
   
+  #Fourthly, a pie chart showing the probable causes of spread/exposure
   fluidRow(highchartOutput("exposureChart")),
   
   br(),
   
   h4("How have vaccines contributed?",  align = "center"),
   
+  #Finally, a stacked bar chart showing the vaccination status by case type
   h4("Breakdown of Vaccination Status by Case Type and Outcome",  align = "center"),
   br(),
   
