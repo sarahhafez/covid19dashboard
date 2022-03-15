@@ -11,41 +11,53 @@ library(shinyjqui)
 library(countup)
 
 #loading data
-
-
 cases_link <-"https://health-infobase.canada.ca/src/data/covidLive/covid19-download.csv"
 original_data_cases <- read.csv(url(cases_link)) %>% 
   mutate(date = lubridate::ymd(date)) %>% 
   dplyr::filter(prname != "Repatriated travellers")
 
+canada_latest_covid_numbers <- original_data_cases %>%
+  arrange(date) %>%
+  dplyr::filter(prname == "Canada") %>%
+  tail(n=1)
+
+exposure_link <- "https://health-infobase.canada.ca/src/data/covidLive/covid19-epiSummary-probableexposure2.csv"
+exposure_data <- read.csv(url(exposure_link))  %>%
+  select(c("Probable.exposure.setting", "Number_of_cases" )) %>%
+  rename(setting = Probable.exposure.setting) %>%
+  filter(setting != "Cases with probable exposure data" & setting != "Information pending")
+
+known_exposure <- exposure_data %>% filter(setting == "Spread")  %>% .[["Number_of_cases"]]
+total <- canada_latest_covid_numbers$numtotal
 
 fluidPage(
   theme = bs_theme(version = 4, bootswatch = "minty"),
   # Application title
   titlePanel(
-    h1("COVID-19: Past and Present Impact", align = "center")
+    h1("COVID-19 in Canada: A Summary", align = "center"),
+    windowTitle = "COVID-19 in Canada: A Summary"
   ),
   
-  h3("The Human Impact of COVID since December 2020", align = "center"),
+  h3("The Human Impact of COVID-19 since December 2019", align = "center"),
   
   
-  #First start with the Map of Canada, showing the total deaths and cases in each provinces
-  #On the side there is a statistic that shows the total deaths and cases in Canada
   
+  #First start by showing some statistics
   
   fluidRow(
     
-    align="center",
+    #align="center",
     
     column(3,valueBox(countupOutput("totalcases"), "Total Cases")),
     column(3,valueBox(countupOutput("totaldeaths"), "Total Deaths")),
-    column(3,valueBox(countupOutput("deathsLastSevenDays"), "Deaths Last Week")),
-    column(3,valueBox(countupOutput("numberOfActiveCases"), "Active Cases"))
+    column(3,valueBox(countupOutput("deathsLastWeek"), "Deaths Last 7 Days")),
+    column(3,valueBox(countupOutput("numberOfActiveCases"), "Active Cases Today"))
     
   ),
   
   br(),
   
+  #Secondly, a Map of Canada, showing the total deaths and cases in each provinces
   
   
   fluidRow(highchartOutput("canadianMap")),
@@ -53,18 +65,18 @@ fluidPage(
   
   br(),
   
+  #Thirdly, a time series chart showing the trends for either daily deaths/cases in each province
   
-  h3("How have vaccines contributed?",  align = "center"),
   
-  h4("Effect of Vaccinations on Trends",  align = "center"),
+  h3("COVID-19 Trends By Province",  align = "center"),
   br(),
   sidebarLayout(
     sidebarPanel(selectInput(inputId = "time_series_data",
                              label = "What kind of statistic are you interested in?", 
                              selected = "Cases",
-                             choices = c("Daily Cases", "Daily Death")),
+                             choices = c("Daily Cases", "Daily Deaths")),
                  selectInput(inputId = "province1",
-                             label = "Which province are you interested in? \n (Choose up to 3)", 
+                             label = "Which provinces are you interested in? \n (Choose up to 3)", 
                              selected = "Canada", choices = unique(original_data_cases$prname)),
                  selectInput(inputId = "province2",
                              label = NULL, 
@@ -77,9 +89,25 @@ fluidPage(
     mainPanel(plotlyOutput("time_series"))
   ),
   
+  
   br(),
   
-  h4("Breakdown of Vaccination Status by Case Type",  align = "center"),
+  #Thirdly, a time series chart showing the trends for either daily deaths/cases in each province
+  
+  h3("Sources of COVID-19 Spread and Exposure",  align = "center"),
+  
+  paste("We only know the probable exposure of", 
+        format(known_exposure, big.mark=","),
+        "cases, representing approximately 47% of the total number of cases.") %>%
+    p(align = "center"),
+  
+  fluidRow(highchartOutput("exposureChart")),
+  
+  br(),
+  
+  h4("How have vaccines contributed?",  align = "center"),
+  
+  h4("Breakdown of Vaccination Status by Case Type and Outcome",  align = "center"),
   br(),
   
   verticalLayout(
@@ -95,7 +123,5 @@ fluidPage(
   ),
   
   br(),
-  
-  
-  
+
 )

@@ -10,9 +10,13 @@ cases_and_vaccine_data <- read.csv(url(cases_and_vaccine_link)) %>%
          Hospiatlization = num_hospitalizations,
          Death = num_deaths) %>%
   pivot_longer(cols=c("Cases","Hospiatlization","Death"),
-               names_to = "case_type" )
+               names_to = "case_type")
 
-
+exposure_link <- "https://health-infobase.canada.ca/src/data/covidLive/covid19-epiSummary-probableexposure2.csv"
+exposure_data <- read.csv(url(exposure_link))  %>%
+  select(c("Probable.exposure.setting", "Number_of_cases" )) %>%
+  rename(setting = Probable.exposure.setting) %>%
+  filter(setting != "Cases with probable exposure data" & setting != "Information pending")
 
 # define function
 
@@ -55,7 +59,7 @@ function(input, output) {
             duration = 2)
   })
   
-  output$deathsLastSevenDays <- renderCountup({ 
+  output$deathsLastWeek <- renderCountup({ 
     countup(canada_latest_covid_numbers$numdeaths_last7,
             duration = 2)
   })
@@ -93,6 +97,14 @@ function(input, output) {
   })
   
   
+  output$exposureChart <-  renderHighchart({
+    exposure_data %>%
+      filter(setting != "Spread")  %>%
+      hchart("pie", hcaes(x = "setting", y = "Number_of_cases"),
+             name = "Number of Cases")
+    
+  })
+  
   output$time_series <- renderPlotly({
     
     if (input$time_series_data == "Daily Cases") {
@@ -114,15 +126,6 @@ function(input, output) {
            x = "Date",
            y = "Number of Reported Cases",
            color="Province") +
-      geom_vline(xintercept=as.numeric(lubridate::ymd("2020-12-14")), colour="grey", linetype="dotted")+
-      geom_text(aes(x=lubridate::ymd("2020-12-14"), y=ymax, 
-               label="First Dose"), colour="grey")+
-      geom_vline(xintercept=as.numeric(lubridate::ymd("2021-05-25")), colour="grey" , linetype="dotted")+
-      geom_text(aes(x=lubridate::ymd("2021-05-25"), y=ymax, 
-                    label="Second Dose"), colour="grey")+
-      geom_vline(xintercept=as.numeric(lubridate::ymd("2021-11-12")), colour="grey", linetype="dotted")+
-      geom_text(aes(x=lubridate::ymd("2021-11-12"), y=ymax, 
-                    label="Third Dose"), colour="grey")+
       scale_color_manual(values = c("#4E84C4", "#E7B800", "#FC4E07"))+
       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
             panel.background = element_blank(), axis.line = element_line(colour = "black"))
